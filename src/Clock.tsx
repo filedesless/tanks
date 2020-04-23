@@ -12,12 +12,12 @@ class Clock extends React.Component<IProps, IState> {
 
     constructor(props: IProps) {
         super(props);
-        this.state = {date: new Date()};
+        this.state = { date: new Date() };
     }
 
     componentDidMount() {
         this.timerID = setInterval(
-            () => this.setState({date: new Date()}),
+            () => this.setState({ date: new Date() }),
             1000
         );
     }
