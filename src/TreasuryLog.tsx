@@ -1,8 +1,10 @@
 import React from 'react';
-import logo from './logo.svg';
 import Coins from './Coins';
 import { API_URL, API_KEY, GUILD_ID } from './globals';
 import { hide_user_digits } from './utils';
+import Button from 'react-bootstrap/Button';
+import Spinner from 'react-bootstrap/Spinner';
+import * as Icon from 'react-bootstrap-icons';
 
 interface ApiResponse {
     id: number
@@ -24,6 +26,7 @@ interface StashApiResponse extends ApiResponse {
 type TreasuryLogsState = {
     logs: Array<StashApiResponse>,
     contributors: Contributor[],
+    loading: boolean,
 }
 
 type Contributor = {
@@ -79,7 +82,7 @@ async function load_data(): Promise<StashApiResponse[]> {
 
 function log2line(log: StashApiResponse) {
     const word = log.operation === Operation.Deposit ? "deposited" : "withdrawed";
-    const time = new Date(log.time).toLocaleString();
+    const time = new Date(log.time).toLocaleDateString();
     return `${time} - ${log.user} ${word} ${new Coins(log.coins).toString()}`;
 }
 
@@ -89,34 +92,46 @@ function contributor2line(contributor: Contributor) {
 
 class TreasuryLogs extends React.Component {
     state: TreasuryLogsState;
+    intervalID?: any;
 
     constructor(props: any) {
         super(props);
         this.state = {
             logs: [],
             contributors: [],
+            loading: false,
         };
     }
 
-    async componentDidMount() {
+    async loadTreasury() {
+        this.setState({ loading: true });
         const logs = await load_data();
+        this.setState({ loading: false });
         const contributors = getContributors(logs);
         this.setState({ logs, contributors });
+    }
+
+    async componentDidMount() {
+        await this.loadTreasury();
+        this.intervalID = setInterval(async () => await this.loadTreasury(), 10 * 1000);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.intervalID);
     }
 
     render() {
         return (
             <div>
+                <Button style={{ float: 'right', margin: '.2em' }} onClick={() => this.loadTreasury()}>
+                    {this.state.loading && <Spinner animation="border" size="sm" /> || <Icon.ArrowClockwise />}
+                </Button>
                 <h2>Treasury access logs</h2>
-                {
-                    this.state.logs.length === 0 ?
-                        <img src={logo} className="App-logo" alt="logo" /> :
-                        <ul>
-                            {this.state.logs.map((log) =>
-                                <li key={log.id}>{log2line(log)}</li>
-                            )}
-                        </ul>
-                }
+                <ul style={{ textAlign: 'left' }}>
+                    {this.state.logs.map((log) =>
+                        <li key={log.id}>{log2line(log)}</li>
+                    )}
+                </ul>
                 <h3>Scoreboard</h3>
                 <ul>
                     {this.state.contributors.map((log) =>

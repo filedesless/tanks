@@ -11,7 +11,7 @@ function App() {
     return (
         <div className="App">
             <header className="App-header">
-                <Tabs id="main" defaultActiveKey="clock">
+                <Tabs id="main" defaultActiveKey="treasury">
                     <Tab id="tab-clock" eventKey="clock" title="Clock">
                         <Clock />
                     </Tab>

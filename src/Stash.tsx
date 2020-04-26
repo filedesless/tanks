@@ -1,9 +1,10 @@
 import React from 'react';
 import Coins from './Coins';
+import { API_URL, API_KEY, GUILD_ID } from './globals';
+import Spinner from 'react-bootstrap/Spinner';
+import Button from 'react-bootstrap/Button'
+import * as Icon from 'react-bootstrap-icons';
 
-const API_URL = "https://api.guildwars2.com/v2";
-const API_KEY = "80C77C67-C099-6247-B918-E1923A826C088E44B09F-C6A8-4F6F-95DC-6997446B06F6";
-const GUILD_ID = "7311D77B-E708-EA11-81AA-A77AA130EAB8";
 
 type ApiResponse = {
     upgrade_id: number,
@@ -20,35 +21,50 @@ type Chest = {
 
 type StashState = {
     chests: Array<Chest>,
+    loading: boolean,
 }
 
 class Stash extends React.Component {
+    timerID?: any;
     state: StashState;
 
     constructor(props: any) {
         super(props);
         this.state = {
-            chests: []
+            chests: [],
+            loading: false,
         };
     }
 
-    componentDidMount() {
+    loadStash() {
+        this.setState({ loading: true });
         fetch(`${API_URL}/guild/${GUILD_ID}/stash?access_token=${API_KEY}`)
             .then(res => res.json())
             .then((stashes: ApiResponse[]) => {
-                console.log(stashes);
                 const chests: Chest[] = stashes.map(stash => ({
                     id: stash.upgrade_id,
                     coins: new Coins(stash.coins),
                     name: stash.note,
                 }));
-                this.setState({ chests });
+                this.setState({ loading: false, chests });
             });
+    }
+
+    async componentDidMount() {
+        this.loadStash();
+        this.timerID = setInterval(() => this.loadStash, 10 * 1000);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.timerID);
     }
 
     render() {
         return (
             <div>
+                <Button style={{ float: 'right', margin: '.2em' }} onClick={() => this.loadStash()}>
+                    {this.state.loading && <Spinner animation="border" size="sm" /> || <Icon.ArrowClockwise />}
+                </Button>
                 <h2>Guild chest list</h2>
                 <ul>
                     {this.state.chests.map((chest) => (
