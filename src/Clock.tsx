@@ -4,7 +4,9 @@ interface IProps {
 }
 
 interface IState {
-    date: Date;
+    hours: number,
+    minutes: number,
+    seconds: number
 }
 
 class Clock extends React.Component<IProps, IState> {
@@ -12,12 +14,29 @@ class Clock extends React.Component<IProps, IState> {
 
     constructor(props: IProps) {
         super(props);
-        this.state = { date: new Date() };
+        this.state = this.setTimeUntilReset();
+    }
+
+    setTimeUntilReset(): IState {
+        // get current time
+        const now = new Date();
+        // get target time (next midnight)
+        const rst = new Date();
+        rst.setUTCHours(0, 0, 0, 0);
+        rst.setUTCDate(rst.getUTCDate() + 1);
+        // get time difference in seconds
+        const dst = Math.floor((rst.getTime() - now.getTime()) / 1000);
+        return {
+            hours: Math.floor(dst / 60 / 60),
+            minutes: Math.floor(dst / 60 % 60),
+            seconds: dst % 60
+        };
+
     }
 
     componentDidMount() {
         this.timerID = setInterval(
-            () => this.setState({ date: new Date() }),
+            () => this.setState(this.setTimeUntilReset()),
             1000
         );
     }
@@ -29,8 +48,8 @@ class Clock extends React.Component<IProps, IState> {
     render() {
         return (
             <div>
-                <h1>Hello world</h1>
-                <h3>{this.state.date.toLocaleTimeString()}</h3>
+                <h1>Time until daily reset</h1>
+                <h3>{this.state.hours}h {this.state.minutes}m {this.state.seconds}s</h3>
             </div>
         );
     }
